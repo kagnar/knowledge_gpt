@@ -13,11 +13,9 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     curl \
     software-properties-common \
+    libgl1-mesa-glx \
     && rm -rf /var/lib/apt/lists/* \
     && pip install "poetry==$POETRY_VERSION"
-
-RUN apt-get update && apt-get install -y libgl1-mesa-glx
-
 
 COPY poetry.lock pyproject.toml poetry.toml ./
 
