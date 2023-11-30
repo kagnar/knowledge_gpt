@@ -16,6 +16,9 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/* \
     && pip install "poetry==$POETRY_VERSION"
 
+RUN apt-get update && apt-get install -y libgl1-mesa-glx
+
+
 COPY poetry.lock pyproject.toml poetry.toml ./
 
 RUN  poetry install --no-interaction --no-ansi --no-root --without dev,lint,extras
