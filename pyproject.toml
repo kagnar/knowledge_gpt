@@ -1,12 +1,3 @@
-[tool.poetry]
-name = "knowledge-gpt"
-version = "0.0.5"
-description = "Accurate answers and instant citations for your documents"
-authors = ["mmz-001 <mmzappdev@gmail.com>"]
-license = "MIT"
-readme = "README.md"
-packages = [{include = "knowledge_gpt"}]
-
 [tool.poetry.dependencies]
 python = "^3.10"
 streamlit = "^1.24.0"
