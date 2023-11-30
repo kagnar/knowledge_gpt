@@ -114,6 +114,7 @@ PROMPT_MESSAGES = [
             The json format should be like this:
             "song_name": "song_name", "artist": "artist", "lyrics_snippet": "lyrics"
             
+            Your Json Resopnse:
             """,
             *map(lambda x: {"image": x, "resize": 768}, base64Frames[0::50][:400]),
         ],
@@ -192,8 +193,9 @@ for x in range(len(response.queries)):
     print(response.queries[x].query[6:])
     results = sp.search(q=response.queries[x].query[6:], type='track')
 
-    st.markdown("Spotify preview: "+results['tracks']['items'][0]['preview_url'])
-    st.markdown("Spotify link: " + results['tracks']['items'][0]['external_urls'])
+    st.markdown("Spotify query: " + response.queries[x].query[6:])
+    st.markdown("Spotify preview: " + str(results['tracks']['items'][0]['preview_url']))
+    st.markdown("Spotify link: " + str(results['tracks']['items'][0]['external_urls']['spotify']))
     st.markdown("====================================================")
     st.markdown("\n\n")
 
