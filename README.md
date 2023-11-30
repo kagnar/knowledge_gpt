@@ -1,5 +1,5 @@
 <h1 align="center">
-📖KnowledgeGPT
+📖BeatPeek AI
 </h1>
 
 <div id="top" align="center">
