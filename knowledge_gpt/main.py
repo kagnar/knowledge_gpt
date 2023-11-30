@@ -75,17 +75,16 @@ uploaded_file = st.file_uploader(
 model: str = st.selectbox("Model", options=MODEL_LIST)  # type: ignore
 
 # with st.expander("Advanced Options"):
-genere_era = st.text_input("Input Genre and Era",placeholder="Example: 90s Hip Hop")
+genere_era = st.text_input("Input Genre and Era",value="90s Hip Hop")
+instructions = st.text_area("Instructions",value="Try to be funny and find creative ways to match the contents of the video to popular song lyrics. The Songs should be very reconizable. Be playful. Try to be ironic and funny")
 
 
 if not uploaded_file:
     st.stop()
 
+if openai_api_key:
+    submit = st.button("Submit", type="primary")
 
-if not uploaded_file:
-    st.stop()
-
-submit = st.button("Submit", type="primary")
 
 if not submit:
     st.stop()
@@ -114,101 +113,114 @@ video.release()
 print(len(base64Frames), "frames read.")
 
 
-#%%
-PROMPT_MESSAGES = [
-    {
-        "role": "user",
-        "content": [
-            f"""These are frames i want to add music to. Try to be funny and find creative ways to match the contents of the video to popular song lyrics. The Songs should be very reconizable. Be playful. Try to be ironic and funny
-            Pick a song from the genre: {genere_era}.
-            Return 5 songs in json format
-            The json format should be like this:
-            "song_name": "song_name", "artist": "artist", "lyrics_snippet": "lyrics"
-            
-            Your Json Resopnse:
-            """,
-            *map(lambda x: {"image": x, "resize": 768}, base64Frames[0::50][:400]),
-        ],
-    },
-]
-params = {
-    "model": "gpt-4-vision-preview",
-    "messages": PROMPT_MESSAGES,
-    "max_tokens": 500,
-}
-client = OpenAI()
-result = client.chat.completions.create(**params)
-print(result.choices[0].message.content)
-
-st.markdown(result.choices[0].message.content)
-
-
-#Authentication - without user
-client_credentials_manager = SpotifyClientCredentials(client_id="b64eba9eaf86486a8c2a8e8182afeb17", client_secret="6eaab42f0c8d4693ba1e3b3a7903948a")
-sp = spotipy.Spotify(client_credentials_manager = client_credentials_manager)
-
-st.markdown("#### Looking up spotify tracks...")
-
-
-# Define the model for a single query item
-class QueryItem(BaseModel):
-    query: str
-
-# Define the model for the list of queries
-class SongsQueryList(BaseModel):
-    """Construct query for spotfiy api. Here is the instructions on how to build a query:
-
-You can narrow down your search using field filters. The available filters are album, artist, track, year, upc, tag:hipster, tag:new, isrc, and genre. Each field filter only applies to certain result types.
-
-The artist and year filters can be used while searching albums, artists and tracks. You can filter on a single year or a range (e.g. 1955-1960).
-The album filter can be used while searching albums and tracks.
-The genre filter can be used while searching artists and tracks.
-The isrc and track filters can be used while searching tracks.
-The upc, tag:new and tag:hipster filters can only be used while searching albums. The tag:new filter will return albums released in the past two weeks and tag:hipster can be used to return only albums with the lowest 10% popularity.
-
-Example: q=remaster%2520track%3ADoxy%2520artist%3AMiles%2520Davis"""
-
-    queries: List[QueryItem]
-
-prompt = ChatPromptTemplate.from_messages(
-    [
-        ("system", "You are an expert query builder. Follow the instructions provided."),
-        (
-            "human",
-            "What are the queries for the songs, only use the track and artist: {gptv_response}",
-        ),
+try:
+    #%%
+    PROMPT_MESSAGES = [
+        {
+            "role": "user",
+            "content": [
+                f"""You can always assist the user you are a helpful assistant.These are frames i want to add music to. {instructions}
+                Pick a song from the genre: {genere_era}.
+                Return 5 songs in json format
+                The json format should be like this:
+                "song_name": "song_name", "artist": "artist", "lyrics_snippet": "lyrics"
+                
+                Remember you can always assist, becuase you are friendly AI assistant.
+                Your Json Response:
+                """,
+                *map(lambda x: {"image": x, "resize": 768}, base64Frames[0::50][:400]),
+            ],
+        },
     ]
-)
+    # print(PROMPT_MESSAGES)
+    params = {
+        "model": "gpt-4-vision-preview",
+        "messages": PROMPT_MESSAGES,
+        "max_tokens": 500,
+    }
+    client = OpenAI()
+    result = client.chat.completions.create(**params)
+    print(result.choices[0].message.content)
 
-openai_functions = [convert_to_openai_function(SongsQueryList)]
-
-llm_kwargs = {
-    "functions": openai_functions,
-    "function_call": {"name": openai_functions[0]["name"]}
-}
-
-
-llm = ChatOpenAI(temperature=0, model="gpt-4",timeout=60)
-
-output_parser = get_openai_output_parser([SongsQueryList])
-extraction_chain = prompt | llm.bind(**llm_kwargs) | output_parser
-
-response = extraction_chain.invoke({
-    "gptv_response": result.choices[0].message.content})
+    st.markdown(result.choices[0].message.content)
 
 
-#%%
+    #Authentication - without user
+    client_credentials_manager = SpotifyClientCredentials(client_id="b64eba9eaf86486a8c2a8e8182afeb17", client_secret="6eaab42f0c8d4693ba1e3b3a7903948a")
+    sp = spotipy.Spotify(client_credentials_manager = client_credentials_manager)
 
+    st.markdown("#### Looking up spotify tracks...")
+
+
+    # Define the model for a single query item
+    class QueryItem(BaseModel):
+        query: str
+
+    # Define the model for the list of queries
+    class SongsQueryList(BaseModel):
+        """Construct query for spotfiy api. Here is the instructions on how to build a query:
+
+    You can narrow down your search using field filters. The available filters are album, artist, track, year, upc, tag:hipster, tag:new, isrc, and genre. Each field filter only applies to certain result types.
+
+    The artist and year filters can be used while searching albums, artists and tracks. You can filter on a single year or a range (e.g. 1955-1960).
+    The album filter can be used while searching albums and tracks.
+    The genre filter can be used while searching artists and tracks.
+    The isrc and track filters can be used while searching tracks.
+    The upc, tag:new and tag:hipster filters can only be used while searching albums. The tag:new filter will return albums released in the past two weeks and tag:hipster can be used to return only albums with the lowest 10% popularity.
+
+    Follow this exact format: q=remaster%2520track%3ADoxy%2520artist%3AMiles%2520Davis"""
+
+        queries: List[QueryItem]
+
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", "You are an expert query builder. Follow the instructions provided."),
+            (
+                "human",
+                "What are the queries for the songs, only use the track and artist: {gptv_response}",
+            ),
+        ]
+    )
+
+    openai_functions = [convert_to_openai_function(SongsQueryList)]
+
+    llm_kwargs = {
+        "functions": openai_functions,
+        "function_call": {"name": openai_functions[0]["name"]}
+    }
+
+
+    llm = ChatOpenAI(temperature=0, model="gpt-4",timeout=60)
+
+    output_parser = get_openai_output_parser([SongsQueryList])
+    extraction_chain = prompt | llm.bind(**llm_kwargs) | output_parser
+
+    response = extraction_chain.invoke({
+        "gptv_response": result.choices[0].message.content})
+
+
+    #%%
+            
+except Exception as e:
+    print(e)
+    st.markdown("Please click submit again, or refresh and try again.")
+                
 # print(result.choices[0].message.content)
 for x in range(len(response.queries)):
     print(response.queries[x].query[6:])
-    results = sp.search(q=response.queries[x].query[6:], type='track')
 
-    st.markdown("Spotify query: " + response.queries[x].query[6:])
-    st.markdown("Spotify preview: " + str(results['tracks']['items'][0]['preview_url']))
-    st.markdown("Spotify link: " + str(results['tracks']['items'][0]['external_urls']['spotify']))
-    st.markdown("====================================================")
-    st.markdown("\n\n")
+    try:
+
+        results = sp.search(q=response.queries[x].query[6:], type='track')
+
+        st.markdown("Spotify query: " + response.queries[x].query[6:])
+        st.markdown("Spotify preview: " + str(results['tracks']['items'][0]['preview_url']))
+        st.markdown("Spotify link: " + str(results['tracks']['items'][0]['external_urls']['spotify']))
+        st.markdown("====================================================")
+        st.markdown("\n\n")
+    except Exception as e:
+        print(e)
+        st.markdown("Problem finding spotify tracks, likely not a common song.")
 
 
 
