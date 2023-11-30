@@ -66,7 +66,7 @@ if not openai_api_key:
 
 uploaded_file = st.file_uploader(
     "Upload a a photo or video",
-    type=["jpg","mov","mp4"],
+    type=["mov","mp4"],
     help="We done support all apple codecs",
 )
 
@@ -80,6 +80,17 @@ genere_era = st.text_input("Input Genre and Era",placeholder="Example: 90s Hip H
 
 if not uploaded_file:
     st.stop()
+
+
+if not uploaded_file:
+    st.stop()
+
+submit = st.button("Submit", type="primary")
+
+if not submit:
+    st.stop()
+
+st.markdown("#### Analyzing video.... beep bop.")
 
 import tempfile
 
@@ -135,8 +146,8 @@ st.markdown(result.choices[0].message.content)
 #Authentication - without user
 client_credentials_manager = SpotifyClientCredentials(client_id="b64eba9eaf86486a8c2a8e8182afeb17", client_secret="6eaab42f0c8d4693ba1e3b3a7903948a")
 sp = spotipy.Spotify(client_credentials_manager = client_credentials_manager)
-genere_era = "90s Hip Hop"
 
+st.markdown("#### Looking up spotify tracks...")
 
 
 # Define the model for a single query item
